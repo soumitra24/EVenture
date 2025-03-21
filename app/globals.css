@@ -24,3 +24,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes slide {
+  0% { transform: translateX(140%); }
+  100% { transform: translateX(-150%); }
+}
+
+.animate-slide {
+  display: flex;
+  white-space: nowrap;
+  animation: slide 20s linear infinite;
+}
