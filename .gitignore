@@ -9,12 +9,12 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-/next-env.d.ts
-/next.config.ts
-/package-lock.json
-/package.json
-/postcss.config.mjs
-/tsconfig.json
+next-env.d.ts
+next.config.ts
+package-lock.json
+package.json
+postcss.config.mjs
+tsconfig.json
 # testing
 /coverage
 
