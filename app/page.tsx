@@ -1,14 +1,14 @@
-// app/page.tsx - Modified version with protected route
+// app/page.tsx - Modified to include Dashboard link in navbar
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Import router for redirection
+import { useRouter } from "next/navigation"; 
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/auth-helpers-nextjs";
 
 export default function Home() {
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
   const supabase = createClientComponentClient();
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -108,13 +108,10 @@ export default function Home() {
     }
   };
 
-  // New function to handle the booking button click
   const handleBooking = () => {
     if (session) {
-      // User is logged in, redirect to booking page
       router.push('/booking');
     } else {
-      // User is not logged in, show auth modal
       setShowAuthModal(true);
     }
   };
@@ -237,6 +234,10 @@ export default function Home() {
             <Link href="/services" className="text-white hover:text-gray-300">Services</Link>
             <Link href="/about" className="text-white hover:text-gray-300">About</Link>
             <Link href="/contact" className="text-white hover:text-gray-300">Contact</Link>
+            {/* Dashboard link that only appears when logged in */}
+            {session && (
+              <Link href="/dashboard" className="text-white hover:text-gray-300">Dashboard</Link>
+            )}
             <Link href="/admin" className="text-white hover:text-gray-300">Admin Login</Link>
           </div>
         </nav>
@@ -254,7 +255,6 @@ export default function Home() {
               </p>
               
               <div className="flex space-x-4">
-                {/* Book Now Button - Modified to use our handler function instead of Link */}
                 <button 
                   onClick={handleBooking}
                   className="bg-black hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
