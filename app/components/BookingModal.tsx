@@ -29,7 +29,11 @@ export interface BookingFormData {
   dropoffTime: string;
   pickupLocation: string;
   dropoffLocation: string;
+  paymentId: string;
+  totalAmount: number;
+  totalHours: number;
 }
+
 
 export default function BookingModal({ scooter, onClose, onSubmit }: BookingModalProps) {
   const [bookingData, setBookingData] = useState<BookingFormData>({
@@ -38,7 +42,10 @@ export default function BookingModal({ scooter, onClose, onSubmit }: BookingModa
     dropoffDate: "",
     dropoffTime: "",
     pickupLocation: "",
-    dropoffLocation: ""
+    dropoffLocation: "",
+    paymentId:"",
+    totalAmount: 0,
+    totalHours: 0,
   });
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [totalHours, setTotalHours] = useState<number>(0);
@@ -103,13 +110,25 @@ export default function BookingModal({ scooter, onClose, onSubmit }: BookingModa
       name: "EV Scooter Rental",
       description: `Booking for ${scooter.name}`,
       image: scooter.imageurl,
-      handler: async (response: any) => {
-        console.log("Payment Success:", response);
+      handler: async (response: any) => {        
         try {
-          await onSubmit(bookingData);
+          // Add payment details to bookingData
+          const updatedBookingData: BookingFormData = {
+            ...bookingData,
+            paymentId: response.razorpay_payment_id,
+            // Include totalAmount and totalHours from the state variables
+            totalAmount: totalAmount,
+            totalHours: totalHours
+          };
+          
+          setBookingData(updatedBookingData);
+          
+          await onSubmit(updatedBookingData);
           onClose();
-          // Redirect to dashboard after successful payment
-        window.location.href = "/dashboard";
+          console.log("Booking completed successfully!");
+          
+          window.location.href="/dashboard"
+          // Redirect removed
         } catch (error) {
           console.error("Error submitting booking:", error);
         } finally {
@@ -144,6 +163,7 @@ export default function BookingModal({ scooter, onClose, onSubmit }: BookingModa
     e.preventDefault();
     handlePayment();
   };
+
 
   // Generate time slots for the dropdown (30 min intervals)
   const generateTimeSlots = () => {

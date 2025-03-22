@@ -28,6 +28,7 @@ interface EVScooter {
 // Define the booking type
 interface Booking {
   id?: string;
+  booking_reference: string;
   user_id: string;
   scooter_id: string;
   pickup_date: string;
@@ -36,8 +37,14 @@ interface Booking {
   dropoff_time: string;
   pickup_location: string;
   dropoff_location: string;
+  total_amount: number;
+  total_hours: number;
+  payment_id: string;
+  order_id?: string;
+  payment_signature?: string;
+  booking_status: 'pending' | 'confirmed' | 'cancelled';
   created_at?: string;
-  status?: string;
+  updated_at?: string;
 }
 
 export default function BookingPage() {
@@ -45,7 +52,6 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true);
   const [selectedScooter, setSelectedScooter] = useState<EVScooter | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClientComponentClient();
   const router = useRouter();
 
@@ -62,8 +68,6 @@ export default function BookingPage() {
           // User not authenticated, will be handled by ProtectedRoute
           return;
         }
-        
-        setUserId(session.user.id);
         
         // Fetch scooters from Supabase
         const { data: scootersData, error } = await supabase
@@ -88,6 +92,7 @@ export default function BookingPage() {
     fetchUserAndScooters();
   }, [supabase]);
 
+
   const handleBookingClick = (scooter: EVScooter) => {
     if (scooter.available > 0) {
       setSelectedScooter(scooter);
@@ -101,12 +106,18 @@ export default function BookingPage() {
   };
 
   const handleBookingSubmit = async (bookingData: BookingFormData) => {
-    if (!userId || !selectedScooter) return;
-    
     try {
-      // Create a new booking record in the database
+      // Get the current session to ensure we have the latest user ID
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session || !selectedScooter) {
+        throw new Error('No active session or selected scooter');
+      }
+      
+      // Create a new booking record in the database using session.user.id
       const newBooking: Booking = {
-        user_id: userId,
+        user_id: session.user.id, // Use session.user.id directly
+        booking_reference: `BK-${Date.now().toString(36).toUpperCase()}`,
         scooter_id: selectedScooter.id,
         pickup_date: bookingData.pickupDate,
         pickup_time: bookingData.pickupTime,
@@ -114,7 +125,11 @@ export default function BookingPage() {
         dropoff_time: bookingData.dropoffTime,
         pickup_location: bookingData.pickupLocation,
         dropoff_location: bookingData.dropoffLocation,
-        status: 'confirmed'
+        payment_id: bookingData.paymentId,
+        total_amount: bookingData.totalAmount,
+        total_hours: bookingData.totalHours,
+        booking_status: 'confirmed',
+        created_at: new Date().toISOString()
       };
       
       const { data, error } = await supabase
@@ -138,7 +153,6 @@ export default function BookingPage() {
         throw updateError;
       }
       
-      
       // Update local state
       setEvScooters(prev => 
         prev.map(scooter => 
@@ -152,13 +166,10 @@ export default function BookingPage() {
       setShowBookingModal(false);
       setSelectedScooter(null);
       
-      // Optionally, redirect to a booking confirmation page
-      // router.push(`/booking/confirmation/${data[0].id}`);
     } catch (error) {
       console.error('Booking failed:', error);
       alert('Booking failed. Please try again later.');
     }
-    
   };
 
   return (
